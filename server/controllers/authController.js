@@ -44,8 +44,30 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
+    const { email, password } = req.body;
+    const user = await AuthSchema.findOne(email);
+
+    if (!user) {
+      return res.status(500).json({ msg: "User not found" });
+    }
+
+    const passwordCompare = await bcrypt.compare(password, user.password);
+
+    if (!passwordCompare) {
+      return res.status(500).json({ msg: "Wrong password!" });
+    }
+
+    const token = jwt.sign({ id: user._id }, "SECRET_KEY", {
+      expiresIn: "1h",
+    });
+
+    res.status(200).json({
+      status: "OK",
+      user,
+      token,
+    });
   } catch (err) {
-    console.log(err);
+    return res.status(500).json({ msg: err.message });
   }
 };
 
